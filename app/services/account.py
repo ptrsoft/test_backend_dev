@@ -39,9 +39,9 @@ class AccountService:
         filter_query = {}
         
         if name:
-            filter_query["name"] = {"$regex": name, "$options": "i"}
+            filter_query["name"] = name
         if industry:
-            filter_query["industry"] = {"$regex": industry, "$options": "i"}
+            filter_query["industry"] = industry
         if is_active is not None:
             filter_query["is_active"] = is_active
         
@@ -63,7 +63,9 @@ class AccountService:
             
             account_id = str(uuid.uuid4())
             account_data["_id"] = account_id
-            account_data["is_active"] = True
+            # Only set is_active to True if not provided
+            if "is_active" not in account_data:
+                account_data["is_active"] = True
             now = datetime.now(timezone.utc)
             account_data["created_at"] = now
             account_data["updated_at"] = now
@@ -109,11 +111,13 @@ class AccountService:
             raise
 
     def delete_account(self, account_id: str) -> None:
-        try:
-            self.collection.delete_one({"_id": account_id})
-        except Exception as e:
-            logger.error("Error in delete_account: %s", str(e))
-            raise Exception(f"Failed to delete account: {str(e)}")
+        result = self.collection.delete_one({"_id": account_id})
+        if hasattr(result, 'deleted_count'):
+            deleted = result.deleted_count
+        else:
+            deleted = 1  # fallback for astrapy
+        if not deleted:
+            raise NotFoundException(f"Account with id {account_id} not found")
 
     def get_total_accounts(
         self,
@@ -124,9 +128,9 @@ class AccountService:
         filter_query = {}
         
         if name:
-            filter_query["name"] = {"$regex": name, "$options": "i"}
+            filter_query["name"] = name
         if industry:
-            filter_query["industry"] = {"$regex": industry, "$options": "i"}
+            filter_query["industry"] = industry
         if is_active is not None:
             filter_query["is_active"] = is_active
             
