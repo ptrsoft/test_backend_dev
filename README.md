@@ -1,164 +1,76 @@
-# FastAPI Backend Project
+# FastAPI + AstraDB Backend
 
-A modern, scalable FastAPI backend project with AstraDB integration, JWT authentication, and comprehensive API documentation.
+## Overview
+This project is a modern FastAPI backend using AstraDB as the database. It supports robust CRUD APIs for multiple business entities, with clean separation of code, tests, and shell-based API checks.
 
-## Features
+### Implemented Entities
+- **Account**: Full CRUD, filtering, pagination, and validation
+- **Opportunity**: Full CRUD, filtering, pagination, and validation
 
-- FastAPI framework with Python 3.12+
-- AstraDB integration with connection pooling
-- JWT-based authentication system
-- CRUD endpoints with Pydantic validation
-- Rate limiting and error handling middleware
-- Comprehensive logging
-- Docker support
-- Unit tests with pytest
-- CI/CD with GitHub Actions
-- Type hints and PEP 8 compliance
+### Project Structure
+```
+app/
+  api/v1/endpoints/         # FastAPI routers for each entity
+  schemas/                  # Pydantic models for each entity
+  services/                 # Business logic for each entity
+  db/session.py             # AstraDB session and collection helpers
 
-## Prerequisites
+scripts/
+  test_account_api.sh       # Shell script for Account API tests
+  test_opportunity_api.sh   # Shell script for Opportunity API tests
 
-- Python 3.12 or higher
-- Docker and Docker Compose
-- AstraDB account and credentials
-- Git
+tests/
+  tests_account.py          # Python tests for Account API
+  test_opportunity.py       # Python tests for Opportunity API
+  conftest.py               # Pytest fixtures
 
-## Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd <project-directory>
+requirements.txt            # All dependencies (including python-dateutil)
+pytest.ini                  # Pytest config (matches test_*.py)
+.env                        # Environment variables (not in version control)
 ```
 
-2. Create and activate a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+## Setup
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Configure AstraDB credentials:**
+   - Copy `.env.example` to `.env` and fill in your AstraDB token, database ID, and (optionally) collection name.
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-## Environment Variables
-
-Create a `.env` file with the following variables:
-
-```env
-# Application
-APP_NAME=fastapi-backend
-DEBUG=True
-ENVIRONMENT=development
-API_PREFIX=/api/v1
-
-# Server
-HOST=0.0.0.0
-PORT=8000
-
-# Security
-SECRET_KEY=your-secret-key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# AstraDB
-ASTRA_DB_SECURE_BUNDLE_PATH=path/to/secure-connect-database.zip
-ASTRA_DB_CLIENT_ID=your-client-id
-ASTRA_DB_CLIENT_SECRET=your-client-secret
-ASTRA_DB_KEYSPACE=your-keyspace
-
-# Rate Limiting
-RATE_LIMIT_PER_MINUTE=60
-```
-
-## Development Setup
-
-1. Start the development server:
-```bash
-uvicorn app.main:app --reload
-```
-
-2. Access the API documentation:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Docker Setup
-
-1. Build the Docker image:
-```bash
-docker build -t fastapi-backend .
-```
-
-2. Run the container:
-```bash
-docker run -p 8000:8000 fastapi-backend
-```
+3. **Run the FastAPI server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
 
 ## Testing
+### Python API Tests
+- Run all tests:
+  ```bash
+  pytest -v
+  ```
+- Run only Account or Opportunity tests:
+  ```bash
+  pytest -v tests/tests_account.py
+  pytest -v tests/test_opportunity.py
+  ```
 
-Run the test suite:
-```bash
-pytest
-```
+### Shell Script API Tests
+- Run Account or Opportunity shell tests:
+  ```bash
+  bash scripts/test_account_api.sh
+  bash scripts/test_opportunity_api.sh
+  ```
 
-Run tests with coverage:
-```bash
-pytest --cov=app tests/
-```
+## Features
+- **AstraDB document model**: Each entity uses its own collection.
+- **Robust error handling**: Custom exceptions, FastAPI exception handlers.
+- **Modern test suite**: Pytest with isolated, auto-cleaned collections.
+- **Shell-based API checks**: For quick, language-agnostic endpoint validation.
+- **Project hygiene**: `.gitignore`, `.env`, and clear separation of code/tests/scripts.
 
-## API Documentation
+## Next Steps
+- Add more entities (Prospect, Product, etc.) following the same pattern.
+- Expand test coverage as needed.
 
-The API documentation is available at:
-- Swagger UI: `/docs`
-- ReDoc: `/redoc`
-
-## Project Structure
-
-```
-├── app/
-│   ├── api/
-│   │   ├── v1/
-│   │   │   ├── endpoints/
-│   │   │   └── router.py
-│   │   ├── core/
-│   │   │   ├── config.py
-│   │   │   ├── security.py
-│   │   │   └── logging.py
-│   │   ├── db/
-│   │   │   ├── session.py
-│   │   │   └── base.py
-│   │   ├── models/
-│   │   │   └── models.py
-│   │   ├── schemas/
-│   │   │   └── schemas.py
-│   │   ├── services/
-│   │   │   └── services.py
-│   │   └── main.py
-│   ├── tests/
-│   │   ├── conftest.py
-│   │   └── test_api/
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── requirements.txt
-│   └── README.md
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
+For any questions or contributions, please open an issue or PR!
