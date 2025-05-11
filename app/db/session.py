@@ -33,11 +33,16 @@ class AstraDBSession:
             else:
                 raise
 
-    def get_collection(self):
+    def get_collection(self, collection_name: str = None):
+        if collection_name is None:
+            collection_name = self.collection_name
         return self.collection
 
 # Singleton instance
 astradb_session = AstraDBSession()
 
 # Helper for use in API/services
-get_collection = astradb_session.get_collection 
+def get_collection(collection_name: str = None):
+    if collection_name is None:
+        collection_name = astradb_session.collection_name
+    return astradb_session.get_collection(collection_name) 
