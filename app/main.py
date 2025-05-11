@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=".env")
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -7,7 +10,7 @@ import time
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger, log_request
-from app.api.v1.router import api_router
+from app.api.v1.api import api_router
 
 # Setup logging
 setup_logging()
@@ -18,10 +21,10 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Create FastAPI app
 app = FastAPI(
-    title=settings.APP_NAME,
-    openapi_url=f"{settings.API_PREFIX}/openapi.json",
-    docs_url=f"{settings.API_PREFIX}/docs",
-    redoc_url=f"{settings.API_PREFIX}/redoc",
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url=f"{settings.API_V1_STR}/docs",
+    redoc_url=f"{settings.API_V1_STR}/redoc",
 )
 
 # Add rate limiter to app state
@@ -31,10 +34,10 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Modify this in production
+    allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 # Add request logging middleware
@@ -55,11 +58,11 @@ async def log_requests(request: Request, call_next):
     return response
 
 # Include API router
-app.include_router(api_router, prefix=settings.API_PREFIX)
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to FastAPI Backend"}
+    return {"message": "Welcome to Test Backend Dev API"}
 
 @app.get("/health")
 async def health_check():

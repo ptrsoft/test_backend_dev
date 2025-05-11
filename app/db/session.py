@@ -1,66 +1,43 @@
-from cassandra.cluster import Cluster, Session
-from cassandra.auth import PlainTextAuthProvider
-from cassandra.policies import TokenAware, DCAwareRoundRobinPolicy
-from contextlib import contextmanager
-from typing import Generator
-
+from astrapy import DataAPIClient
 from app.core.config import settings
-from app.core.logging import get_logger
+import os
+from functools import lru_cache
 
-logger = get_logger(__name__)
+class AstraDBSession:
+    def __init__(self):
+        self.token = settings.ASTRA_DB_APPLICATION_TOKEN or os.getenv('ASTRA_DB_APPLICATION_TOKEN')
+        self.database_id = settings.ASTRA_DB_ID or os.getenv('ASTRA_DB_ID')
+        self.collection_name = getattr(settings, 'ASTRA_DB_COLLECTION', None) or os.getenv('ASTRA_DB_COLLECTION', 'outreach')
+        self.api_endpoint = f"https://{self.database_id}.apps.astra.datastax.com"
+        print(f"[AstraDBSession] Using token: {'*' * len(self.token) if self.token else 'None'}")
+        print(f"[AstraDBSession] Using database_id: {self.database_id}")
+        print(f"[AstraDBSession] Using collection_name: {self.collection_name}")
+        self.client = None
+        self.database = None
+        self.collection = None
+        self._connect()
 
-
-class DatabaseSession:
-    def __init__(self) -> None:
-        self._session: Optional[Session] = None
-        self._cluster: Optional[Cluster] = None
-
-    def init_session(self) -> None:
-        """
-        Initialize the database session
-        """
+    def _connect(self):
+        if not self.token or not self.database_id:
+            raise RuntimeError("AstraDB credentials are missing.")
+        self.client = DataAPIClient(token=self.token)
+        self.database = self.client.get_database(self.api_endpoint)
         try:
-            auth_provider = PlainTextAuthProvider(
-                username=settings.ASTRA_DB_CLIENT_ID,
-                password=settings.ASTRA_DB_CLIENT_SECRET,
-            )
-
-            self._cluster = Cluster(
-                cloud={
-                    "secure_connect_bundle": settings.ASTRA_DB_SECURE_BUNDLE_PATH
-                },
-                auth_provider=auth_provider,
-                protocol_version=4,
-                load_balancing_policy=TokenAware(DCAwareRoundRobinPolicy()),
-            )
-
-            self._session = self._cluster.connect(settings.ASTRA_DB_KEYSPACE)
-            logger.info("Successfully connected to AstraDB")
+            self.collection = self.database.get_collection(self.collection_name)
         except Exception as e:
-            logger.error(f"Failed to connect to AstraDB: {str(e)}")
-            raise
+            if "COLLECTION_NOT_EXIST" in str(e):
+                self.collection = self.database.create_collection(
+                    name=self.collection_name,
+                    options={}
+                )
+            else:
+                raise
 
-    @contextmanager
-    def get_session(self) -> Generator[Session, None, None]:
-        """
-        Get a database session
-        """
-        if not self._session:
-            self.init_session()
-        try:
-            yield self._session
-        except Exception as e:
-            logger.error(f"Database session error: {str(e)}")
-            raise
+    def get_collection(self):
+        return self.collection
 
-    def close(self) -> None:
-        """
-        Close the database session and cluster
-        """
-        if self._session:
-            self._session.shutdown()
-        if self._cluster:
-            self._cluster.shutdown()
+# Singleton instance
+astradb_session = AstraDBSession()
 
-
-db = DatabaseSession() 
+# Helper for use in API/services
+get_collection = astradb_session.get_collection 

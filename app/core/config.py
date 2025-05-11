@@ -1,6 +1,5 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, validator
 
 
 class Settings(BaseSettings):
@@ -8,7 +7,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "fastapi-backend"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
-    API_PREFIX: str = "/api/v1"
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Test Backend Dev"
     
     # Server
     HOST: str = "0.0.0.0"
@@ -17,13 +17,12 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
     # AstraDB
-    ASTRA_DB_SECURE_BUNDLE_PATH: str
-    ASTRA_DB_CLIENT_ID: str
-    ASTRA_DB_CLIENT_SECRET: str
-    ASTRA_DB_KEYSPACE: str
+    ASTRA_DB_APPLICATION_TOKEN: str
+    ASTRA_DB_ID: str
+    ASTRA_DB_COLLECTION: str = "outreach"
     
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
@@ -31,6 +30,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"  # Allow extra fields in the settings
 
 
 settings = Settings() 

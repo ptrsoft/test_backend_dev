@@ -1,7 +1,6 @@
 import logging
 import sys
-from typing import Any, Dict
-
+from typing import Optional
 from app.core.config import settings
 
 
@@ -16,14 +15,13 @@ def setup_logging() -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler("app.log"),
         ],
     )
 
 
 def get_logger(name: str) -> logging.Logger:
     """
-    Get a logger instance with the specified name
+    Get a logger instance with the given name
     """
     return logging.getLogger(name)
 
@@ -34,22 +32,20 @@ def log_request(
     url: str,
     status_code: int,
     duration: float,
-    **kwargs: Any,
+    error: Optional[str] = None
 ) -> None:
     """
     Log HTTP request details
     """
-    log_data: Dict[str, Any] = {
+    log_data = {
         "method": method,
         "url": url,
         "status_code": status_code,
-        "duration": f"{duration:.2f}s",
-        **kwargs,
+        "duration": f"{duration:.3f}s"
     }
     
-    if status_code >= 500:
-        logger.error("Request failed", extra=log_data)
-    elif status_code >= 400:
-        logger.warning("Request failed", extra=log_data)
+    if error:
+        log_data["error"] = error
+        logger.error(f"Request failed: {log_data}")
     else:
-        logger.info("Request successful", extra=log_data) 
+        logger.info(f"Request completed: {log_data}") 
